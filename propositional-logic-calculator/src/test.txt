@@ -1,0 +1,7 @@
+sam>(!tyler|!thom|!alex)
+jack>tyler
+bit>!tyler^!thom
+alex>bit
+jack
+sam
+thom>thom
