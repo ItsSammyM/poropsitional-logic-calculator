@@ -31,13 +31,14 @@ impl Workspace{
         }
     }
     pub fn knowledge_base_from_all_expressions(&self)->KnowledgeBase{
-        let mut kb = self.expression_set.set
-            .iter()
+        let mut kb = self.expression_set.set.iter()
             .fold(KnowledgeBase::tautology(), |mut kb, x|{
                 kb.combine(KnowledgeBase::from_expression(x.clone()));
                 kb
             });
+        println!("Knowledge base complete");
         kb.simplify();
+        println!("Knowledge base simplified");
         kb
     }
     pub fn print_knowledge_base_from_all_expressions(&self){

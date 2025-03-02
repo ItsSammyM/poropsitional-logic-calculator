@@ -1,7 +1,9 @@
-sam>(!tyler|!thom|!alex)
-jack>tyler
-bit>!tyler^!thom
-alex>bit
-jack
-sam
-thom>thom
+anna>josh^matthew
+tim>you^josh
+matthew>steph^frasher
+frasher>steph^anna
+you>anna^matthew
+josh>anna^tim
+steph>tim^matthew
+you
+(!steph&!anna)|(!steph&!matthew)|(!steph&!fraser)|(!steph&!josh)|(!tim&!steph)|(!tim&!anna)|(!tim&!matthew)|(!tim&!fraser)|(!tim&!josh)|(!matthew&!anna)|(!matthew&!fraser)|(!matthew&!josh)|(!fraser&!anna)|(!you&!steph)|(!you&!anna)|(!you&!tim)|(!you&!matthew)|(!you&!fraser)|(!you&!josh)|(!josh&!anna)|(!josh&!fraser)
