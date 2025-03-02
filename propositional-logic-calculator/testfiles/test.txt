@@ -1,0 +1,9 @@
+anna>josh^matthew
+tim>you^josh
+matthew>steph^frasher
+frasher>steph^anna
+you>anna^matthew
+josh>anna^tim
+steph>tim^matthew
+you
+((!steph & !anna & matthew & fraser & josh & tim & you) |(!steph & !matthew & anna & fraser & josh & tim & you) |(!steph & !fraser & anna & matthew & josh & tim & you) |(!steph & !josh & anna & matthew & fraser & tim & you) |(!steph & !tim & anna & matthew & fraser & josh & you) |(!anna & !matthew & steph & fraser & josh & tim & you) |(!anna & !fraser & steph & matthew & josh & tim & you) |(!anna & !josh & steph & matthew & fraser & tim & you) |(!anna & !tim & steph & matthew & fraser & josh & you) |(!matthew & !fraser & steph & anna & josh & tim & you) |(!matthew & !josh & steph & anna & fraser & tim & you) |(!matthew & !tim & steph & anna & fraser & josh & you) |(!fraser & !josh & steph & anna & matthew & tim & you) |(!fraser & !tim & steph & anna & matthew & josh & you) |(!josh & !tim & steph & anna & matthew & fraser & you) |(!you & !steph & anna & matthew & fraser & josh & tim) |(!you & !anna & steph & matthew & fraser & josh & tim) |(!you & !matthew & steph & anna & fraser & josh & tim) |(!you & !fraser & steph & anna & matthew & josh & tim) |(!you & !josh & steph & anna & matthew & fraser & tim) |(!you & !tim & steph & anna & matthew & fraser & josh))

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 use super::{expression::ExpressionNode, variable::Variable, Expression, VariableNames};
 
@@ -65,44 +65,16 @@ impl KnowledgeBase{
 
         let mut run_again = true;
 
-        let mut subset_cache: HashMap<(KnowledgeBaseFact, KnowledgeBaseFact), bool> = HashMap::new();
-
-        let cache_ref = &mut subset_cache;
-
-        let mut is_subset = move |a: &KnowledgeBaseFact, b: &KnowledgeBaseFact|{
-            let tuple = (a.clone(),b.clone());
-            if let Some(is_subset) = cache_ref.get(&tuple) {
-                *is_subset
-            }else{
-                let is_subset = tuple.0.is_subset(&tuple.1);
-                cache_ref.insert(tuple, is_subset);
-                is_subset
-            }
-        };
-
-        
-        let mut tautology_cache: HashMap<KnowledgeBaseFact, bool> = HashMap::new();
-        let tautology_cache_ref = &mut tautology_cache;
-        let mut is_tautology = move |a: &KnowledgeBaseFact|{
-            if let Some(a) = tautology_cache_ref.get(&a) {
-                *a
-            }else{
-                let tautology = a.tautology();
-                tautology_cache_ref.insert(a.clone(), tautology);
-                tautology
-            }
-        };
-
         while run_again {
             run_again = false;
 
             let mut out = Vec::new();
-            let mut units = Vec::new();
+            let mut units = HashSet::new();
 
             //remove superset & duplicates & tautologies
             for fact_a in self.facts.iter(){
 
-                if out.contains(fact_a) || is_tautology(fact_a) {
+                if out.contains(fact_a) || fact_a.tautology() {
                     run_again = true;
                     continue;
                 }
@@ -110,12 +82,11 @@ impl KnowledgeBase{
                 if !self.facts
                     .iter()
                     .any(|fact_b|{
-                        is_subset(fact_b, fact_a) && !is_subset(fact_a, fact_b)
-                        // fact_b.is_subset(fact_a) && !fact_a.is_subset(fact_b)
+                        fact_b.is_subset(fact_a) && !fact_a.is_subset(fact_b)
                     })
                 {
                     if let Some(literal) = fact_a.is_unit() {
-                        units.push(literal);
+                        units.insert(literal);
                     }
                     out.push(fact_a.clone());
                 }else{
@@ -140,43 +111,37 @@ impl KnowledgeBase{
 /// empty fact is contradiction
 #[derive(Debug, Clone, Eq)]
 struct KnowledgeBaseFact{
-    set: Vec<KnowledgeBaseLiteral>
+    set: HashSet<KnowledgeBaseLiteral>
 }
 impl KnowledgeBaseFact{
-    fn new(set: Vec<KnowledgeBaseLiteral>)->Self{
+    fn new(set: HashSet<KnowledgeBaseLiteral>)->Self{
         Self{set}
     }
-    pub(super) fn literals(&self)->&Vec<KnowledgeBaseLiteral>{
+    pub(super) fn literals(&self)->&HashSet<KnowledgeBaseLiteral>{
         &self.set
     }
     fn contains(&self, literal: &KnowledgeBaseLiteral)->bool{
         self.set.contains(literal)
     }
     fn is_subset(&self, other: &KnowledgeBaseFact)->bool{
-        self.set.iter()
-            .all(|literal|other.contains(literal))
+        self.set.is_subset(&other.set)
     }
-    fn tautology(&self)->bool{
-        self.set.iter().any(|x|
-            self.set.iter().any(|y|
-                x.complement_of(y)
-            )
-        )
+    fn tautology(&self) -> bool {
+        let mut seen = HashSet::new();
+        for lit in &self.set {
+            if seen.contains(&lit.negated()) { return true; }
+            seen.insert(lit);
+        }
+        false
     }
     fn contradiction(&self)->bool{
-        if self.set.is_empty() {return true;}
-
-        self.set.iter().enumerate().any(|(i,x)|{
-            self.set.iter().skip(i).any(|y|{
-                x.complement_of(y)
-            })
-        })
+        self.set.is_empty()
     }
     fn filter_literal(&mut self, literal: &KnowledgeBaseLiteral){
         self.set.retain(|l|l!=literal);
     }
     /// if any element was removed then true
-    fn filter_negative_literals(&mut self, literals: &Vec<&KnowledgeBaseLiteral>)->bool{
+    fn filter_negative_literals(&mut self, literals: &HashSet<&KnowledgeBaseLiteral>)->bool{
         let mut changed = false;
         self.set.retain(|l|{
             if !literals.contains(&&l.negated()) {
@@ -188,32 +153,17 @@ impl KnowledgeBaseFact{
         });
         changed
     }
-    // fn remove_duplicates(&mut self){
-    //     self.set = self.set.iter()
-    //         .enumerate()
-    //         .filter(|(i, x)|
-    //             self.set.iter().skip(i).any(|y|{
-    //                 x.complement_of(y)
-    //             })
-    //         )
-    // }
     fn is_unit(&self)->Option<&KnowledgeBaseLiteral>{
         if self.set.len() != 1 {
             None
         } else {
-            self.set.first()
+            self.set.iter().next()
         }
     }
 }
 impl PartialEq for KnowledgeBaseFact{
     fn eq(&self, other: &Self) -> bool {
         self.is_subset(other) && other.is_subset(self)
-    }
-}
-impl Hash for KnowledgeBaseFact{
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.set.len().hash(state);
-        self.set.first().hash(state)
     }
 }
 
@@ -271,8 +221,7 @@ impl KnoweldgeBaseBuilder{
             ExpressionNode::Or(a, b) => {
                 let already_in_fact = matches!(self.state, KnowledgeBaseFactBuilder::Fact(_));
                 if !already_in_fact{
-                    let fact = Vec::new();
-                    self.state = KnowledgeBaseFactBuilder::Fact(fact);
+                    self.state = KnowledgeBaseFactBuilder::Fact(HashSet::new());
                 }
                 
                 self.from_expression_recursive(a);
@@ -287,10 +236,10 @@ impl KnoweldgeBaseBuilder{
             ExpressionNode::Variable(variable) => {
                 let new_fact = KnowledgeBaseLiteral::new(false, variable);
                 if let KnowledgeBaseFactBuilder::Fact(fact) = &mut self.state{
-                    fact.push(new_fact);
+                    fact.insert(new_fact);
                 }else{
-                    let mut fact: Vec<KnowledgeBaseLiteral> = Vec::new();
-                    fact.push(new_fact);
+                    let mut fact = HashSet::new();
+                    fact.insert(new_fact);
                     self.base.push_fact(KnowledgeBaseFact::new(fact));
                 }
             },
@@ -300,10 +249,10 @@ impl KnoweldgeBaseBuilder{
                 let new_fact = KnowledgeBaseLiteral::new(true, variable);
 
                 if let KnowledgeBaseFactBuilder::Fact(fact) = &mut self.state{
-                    fact.push(new_fact);
+                    fact.insert(new_fact);
                 }else{
-                    let mut fact: Vec<KnowledgeBaseLiteral> = Vec::new();
-                    fact.push(new_fact);
+                    let mut fact = HashSet::new();
+                    fact.insert(new_fact);
                     self.base.push_fact(KnowledgeBaseFact::new(fact));
                 }
             },
@@ -313,7 +262,7 @@ impl KnoweldgeBaseBuilder{
 
 #[derive(Default)]
 enum KnowledgeBaseFactBuilder{
-    Fact(Vec<KnowledgeBaseLiteral>),
+    Fact(HashSet<KnowledgeBaseLiteral>),
     #[default]
     None
 }

@@ -21,16 +21,14 @@ fn main() {
     workspace.print_knowledge_base_from_all_expressions();
 }
 
-
 fn two_are_evil(){
-    let names = vec!["steph", "anna", "tim", "matthew", "fraser", "you", "josh"];
-    let mut out = String::new();
-    for a in names.iter(){
-        for b in names.iter(){
-            if a <= b {continue;}
-            out.push_str(("(!".to_string()+a+"&!"+b+")|").as_str());
-        }
-    }
-    out.remove(out.len()-1);
-    println!("{}", out);
+    // let names = vec!["steph", "anna", "tim", "matthew", "fraser", "you", "josh"];
+    // let mut out = String::new();
+    // for i in 0..7{
+    //     for j in 0..7{
+    //         if i == 
+    //     }
+    // }
+    // println!("{}", out);
 }
+
